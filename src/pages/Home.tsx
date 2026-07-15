@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import MobileBottomNav from "../components/MobileBottomNav";
@@ -44,6 +44,95 @@ export default function Home() {
     const cleanup = initSiteInteractions();
     return cleanup;
   }, []);
+
+  // お問い合わせフォーム送信（/contact.php へ JSON を POST）
+  type FormState = "idle" | "sending" | "success" | "error";
+  const [formStatus, setFormStatus] = useState<FormState>("idle");
+  const [formError, setFormError] = useState("");
+  const [heroStatus, setHeroStatus] = useState<FormState>("idle");
+  const [heroError, setHeroError] = useState("");
+
+  // 送信の共通処理（本フォーム・かんたんフォーム兼用）
+  const postContact = async (
+    payload: Record<string, string>,
+    setStatus: (s: FormState) => void,
+    setError: (m: string) => void,
+    form: HTMLFormElement,
+  ) => {
+    setStatus("sending");
+    setError("");
+    try {
+      const res = await fetch("/contact.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.status === "success") {
+        setStatus("success");
+        form.reset();
+      } else {
+        setStatus("error");
+        setError(data.message || "送信に失敗しました。時間をおいて再度お試しください。");
+      }
+    } catch {
+      setStatus("error");
+      setError("通信エラーが発生しました。時間をおいて再度お試しください。");
+    }
+  };
+
+  // 本フォーム（全項目）
+  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (formStatus === "sending") return;
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const get = (key: string) => String(fd.get(key) ?? "").trim();
+
+    postContact(
+      {
+        source: "本フォーム",
+        inquiryType: get("相談種別"),
+        name: get("お名前"),
+        phone: get("電話番号"),
+        email: get("メールアドレス"),
+        propertyUrl: get("気になる物件URL"),
+        area: get("希望エリア"),
+        budget: get("家賃予算"),
+        moveTiming: get("引っ越し希望時期"),
+        contactMethod: get("希望連絡方法"),
+        contactTime: get("連絡希望時間帯"),
+        message: get("相談内容"),
+      },
+      setFormStatus,
+      setFormError,
+      form,
+    );
+  };
+
+  // かんたん相談フォーム（FV上部・連絡先は電話/メール兼用）
+  const handleHeroSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (heroStatus === "sending") return;
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const get = (key: string) => String(fd.get(key) ?? "").trim();
+
+    const contactTime = get("希望連絡時間帯");
+    postContact(
+      {
+        source: "かんたん相談フォーム",
+        name: get("お名前"),
+        contact: get("連絡先"),
+        propertyUrl: get("物件URL"),
+        contactTime: contactTime === "希望連絡時間帯を選択" ? "" : contactTime,
+      },
+      setHeroStatus,
+      setHeroError,
+      form,
+    );
+  };
 
   return (
     <>
@@ -115,7 +204,12 @@ export default function Home() {
                     <span>初期費用の内容を確認</span>
                   </div>
                 </div>
-                <form className="hero-form" id="hero-quick-form" action="#contact">
+                <form
+                  className="hero-form"
+                  id="hero-quick-form"
+                  onSubmit={handleHeroSubmit}
+                  noValidate
+                >
                   <div className="hero-form-title">かんたん相談フォーム</div>
                   <div className="hero-form-grid">
                     <input
@@ -125,8 +219,8 @@ export default function Home() {
                       placeholder="物件URLを貼り付け"
                       data-event="input_property_url"
                     />
-                    <input name="お名前" type="text" placeholder="お名前" />
-                    <input name="連絡先" type="text" placeholder="電話またはメール" />
+                    <input name="お名前" type="text" placeholder="お名前" required />
+                    <input name="連絡先" type="text" placeholder="電話またはメール" required />
                     <select className="wide" name="希望連絡時間帯" defaultValue="希望連絡時間帯を選択">
                       <option>希望連絡時間帯を選択</option>
                       <option>午前</option>
@@ -140,9 +234,19 @@ export default function Home() {
                     <li>初期費用確認</li>
                     <li>内覧日調整</li>
                   </ul>
-                  <a className="btn btn-primary" href="#contact">
-                    送信する
-                  </a>
+                  <button className="btn btn-primary" type="submit" disabled={heroStatus === "sending"}>
+                    {heroStatus === "sending" ? "送信中…" : "送信する"}
+                  </button>
+                  {heroStatus === "success" && (
+                    <p className="form-status form-status-success" role="status">
+                      送信が完了しました。担当者よりご連絡いたします。
+                    </p>
+                  )}
+                  {heroStatus === "error" && (
+                    <p className="form-status form-status-error" role="alert">
+                      {heroError}
+                    </p>
+                  )}
                   <p className="micro-note">
                     <span className="ib">物件や空室状況により、ご案内できない</span>
                     <span className="ib">場合があります。</span>
@@ -773,9 +877,8 @@ export default function Home() {
                 <form
                   className="contact-card"
                   data-motion="fade-up"
-                  action="mailto:info@find-home.jp"
-                  method="post"
-                  encType="text/plain"
+                  onSubmit={handleContactSubmit}
+                  noValidate
                 >
                   <label>
                     相談種別
@@ -857,9 +960,20 @@ export default function Home() {
                       を確認し、個人情報の取扱いに同意します。
                     </span>
                   </label>
-                  <button className="btn btn-primary" type="submit">
-                    物件URLを送って相談する
+                  <button className="btn btn-primary" type="submit" disabled={formStatus === "sending"}>
+                    {formStatus === "sending" ? "送信中…" : "物件URLを送って相談する"}
                   </button>
+                  {formStatus === "success" && (
+                    <p className="form-status form-status-success" role="status">
+                      送信が完了しました。担当者より内容確認のうえご連絡いたします。
+                      確認メールをお送りしましたのでご確認ください。
+                    </p>
+                  )}
+                  {formStatus === "error" && (
+                    <p className="form-status form-status-error" role="alert">
+                      {formError}
+                    </p>
+                  )}
                   <p className="micro-note">
                     <span className="ib">送信後、担当者より内容確認のうえご連絡いたします。</span>
                     <br />

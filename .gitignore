@@ -7,3 +7,7 @@ dist-ssr
 
 # build info
 *.tsbuildinfo
+
+# PHP mail form runtime log
+mail_log.log
+public/mail_log.log

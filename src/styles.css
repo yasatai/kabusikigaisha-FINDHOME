@@ -960,6 +960,10 @@ h1, h2, h3, p { margin-top: 0; }
   box-shadow: 0 0 0 3px rgba(24,29,38,.08);
 }
 .contact-card textarea { min-height: 128px; resize: vertical; }
+.contact-card button[disabled] { opacity: .6; cursor: not-allowed; }
+.form-status { margin: 4px 0 0; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.7; }
+.form-status-success { background: #eaf7ee; color: #1c6b34; border: 1px solid #bfe4c9; }
+.form-status-error { background: #fdecec; color: #b3261e; border: 1px solid #f3c2c0; }
 .form-grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .privacy-check {
   grid-template-columns: auto minmax(0, 1fr) !important;
