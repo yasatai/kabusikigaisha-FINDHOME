@@ -399,7 +399,7 @@ h1, h2, h3, p { margin-top: 0; }
  * 上部（ABOUT US＋お悩み）は淡いブルー、下部（Service の答え）で
  * ダークになるようグラデーションの境目を調整。 */
 .band-about-problem {
-  background: url("/images/worry-bg.jpg") center / cover no-repeat;
+  background: url("/images/about-service-bg.jpg") center / cover no-repeat;
 }
 /* 明暗のベールは各セクション自身が持つ（半透明なので帯の画像が透ける）。
  * これで明↔暗の境目が常にセクションの境界と一致し、画面幅が変わっても
