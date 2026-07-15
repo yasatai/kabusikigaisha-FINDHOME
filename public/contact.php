@@ -2,7 +2,8 @@
 mb_language('Japanese');
 mb_internal_encoding('UTF-8');
 
-$logFile = __DIR__ . '/mail_log.txt';
+// ログは .log 拡張子で保存 → .htaccess の deny ルールで直アクセス遮断される
+$logFile = __DIR__ . '/mail_log.log';
 function writeLog($msg) {
     global $logFile;
     file_put_contents($logFile, date('[Y-m-d H:i:s] ') . $msg . "\n", FILE_APPEND);

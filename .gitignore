@@ -9,5 +9,5 @@ dist-ssr
 *.tsbuildinfo
 
 # PHP mail form runtime log
-mail_log.txt
-public/mail_log.txt
+mail_log.log
+public/mail_log.log
