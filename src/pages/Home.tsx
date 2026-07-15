@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import MobileBottomNav from "../components/MobileBottomNav";
@@ -44,6 +44,56 @@ export default function Home() {
     const cleanup = initSiteInteractions();
     return cleanup;
   }, []);
+
+  // お問い合わせフォーム送信（/contact.php へ JSON を POST）
+  const [formStatus, setFormStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [formError, setFormError] = useState("");
+
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (formStatus === "sending") return;
+
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const get = (key: string) => String(fd.get(key) ?? "").trim();
+
+    const payload = {
+      inquiryType: get("相談種別"),
+      name: get("お名前"),
+      phone: get("電話番号"),
+      email: get("メールアドレス"),
+      propertyUrl: get("気になる物件URL"),
+      area: get("希望エリア"),
+      budget: get("家賃予算"),
+      moveTiming: get("引っ越し希望時期"),
+      contactMethod: get("希望連絡方法"),
+      contactTime: get("連絡希望時間帯"),
+      message: get("相談内容"),
+    };
+
+    setFormStatus("sending");
+    setFormError("");
+
+    try {
+      const res = await fetch("/contact.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.status === "success") {
+        setFormStatus("success");
+        form.reset();
+      } else {
+        setFormStatus("error");
+        setFormError(data.message || "送信に失敗しました。時間をおいて再度お試しください。");
+      }
+    } catch {
+      setFormStatus("error");
+      setFormError("通信エラーが発生しました。時間をおいて再度お試しください。");
+    }
+  };
 
   return (
     <>
@@ -773,9 +823,8 @@ export default function Home() {
                 <form
                   className="contact-card"
                   data-motion="fade-up"
-                  action="mailto:info@find-home.jp"
-                  method="post"
-                  encType="text/plain"
+                  onSubmit={handleContactSubmit}
+                  noValidate
                 >
                   <label>
                     相談種別
@@ -857,9 +906,20 @@ export default function Home() {
                       を確認し、個人情報の取扱いに同意します。
                     </span>
                   </label>
-                  <button className="btn btn-primary" type="submit">
-                    物件URLを送って相談する
+                  <button className="btn btn-primary" type="submit" disabled={formStatus === "sending"}>
+                    {formStatus === "sending" ? "送信中…" : "物件URLを送って相談する"}
                   </button>
+                  {formStatus === "success" && (
+                    <p className="form-status form-status-success" role="status">
+                      送信が完了しました。担当者より内容確認のうえご連絡いたします。
+                      確認メールをお送りしましたのでご確認ください。
+                    </p>
+                  )}
+                  {formStatus === "error" && (
+                    <p className="form-status form-status-error" role="alert">
+                      {formError}
+                    </p>
+                  )}
                   <p className="micro-note">
                     <span className="ib">送信後、担当者より内容確認のうえご連絡いたします。</span>
                     <br />
