@@ -44,6 +44,7 @@ $inquiryType   = clean($input['inquiryType']   ?? '');
 $name          = clean($input['name']          ?? '');
 $phone         = clean($input['phone']         ?? '');
 $email         = clean($input['email']         ?? '');
+$contact       = clean($input['contact']       ?? ''); // かんたんフォーム：電話/メール兼用
 $propertyUrl   = clean($input['propertyUrl']   ?? '');
 $area          = clean($input['area']          ?? '');
 $budget        = clean($input['budget']        ?? '');
@@ -51,38 +52,49 @@ $moveTiming    = clean($input['moveTiming']    ?? '');
 $contactMethod = clean($input['contactMethod'] ?? '');
 $contactTime   = clean($input['contactTime']   ?? '');
 $message       = clean($input['message']       ?? '');
+$source        = clean($input['source']        ?? '本フォーム'); // 送信元フォーム名
 
-writeLog("受信データ: inquiryType={$inquiryType} name={$name} email={$email}");
+// 相談種別が空なら既定値（かんたんフォーム用）
+if ($inquiryType === '') $inquiryType = 'かんたん相談フォームより';
+
+// かんたんフォームの「連絡先（電話/メール兼用）」を email/phone に振り分け
+if ($contact !== '') {
+    if (filter_var($contact, FILTER_VALIDATE_EMAIL)) {
+        if ($email === '') $email = $contact;
+    } else {
+        if ($phone === '') $phone = $contact;
+    }
+}
+
+writeLog("受信データ: source={$source} inquiryType={$inquiryType} name={$name} email={$email} phone={$phone}");
 
 $errors = [];
-if (empty($inquiryType)) $errors[] = 'ご相談種別が未入力です';
-if (empty($name))        $errors[] = 'お名前が未入力です';
-if (empty($phone))       $errors[] = '電話番号が未入力です';
-if (empty($email))       $errors[] = 'メールアドレスが未入力です';
+if (empty($name))                 $errors[] = 'お名前が未入力です';
+if (empty($email) && empty($phone)) $errors[] = 'ご連絡先（電話またはメール）が未入力です';
 if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'メールアドレスの形式が正しくありません';
-if (empty($message))     $errors[] = 'ご相談内容が未入力です';
 
 if (!empty($errors)) { http_response_code(400); echo json_encode(['status' => 'error', 'message' => implode(', ', $errors)]); exit; }
 
 // ── 管理者宛メール ─────────────────────────────
 $subject = MAIL_SUBJECT_PREFIX . $inquiryType;
 $body  = "FIND HOME お問い合わせフォームより\n\n";
+$body .= "■ 送信元フォーム\n{$source}\n\n";
 $body .= "■ ご相談種別\n{$inquiryType}\n\n";
 $body .= "■ お名前\n{$name}\n\n";
-$body .= "■ 電話番号\n{$phone}\n\n";
-$body .= "■ メールアドレス\n{$email}\n\n";
+$body .= "■ 電話番号\n" . ($phone !== '' ? $phone : '（未入力）') . "\n\n";
+$body .= "■ メールアドレス\n" . ($email !== '' ? $email : '（未入力）') . "\n\n";
 $body .= "■ 気になる物件URL\n" . ($propertyUrl !== '' ? $propertyUrl : '（未入力）') . "\n\n";
 $body .= "■ 希望エリア\n" . ($area !== '' ? $area : '（未入力）') . "\n\n";
 $body .= "■ 家賃予算\n" . ($budget !== '' ? $budget : '（未入力）') . "\n\n";
 $body .= "■ 引っ越し希望時期\n" . ($moveTiming !== '' ? $moveTiming : '（未入力）') . "\n\n";
 $body .= "■ 希望連絡方法\n" . ($contactMethod !== '' ? $contactMethod : '（未入力）') . "\n\n";
 $body .= "■ 連絡希望時間帯\n" . ($contactTime !== '' ? $contactTime : '（未入力）') . "\n\n";
-$body .= "■ ご相談内容\n{$message}\n\n";
+$body .= "■ ご相談内容\n" . ($message !== '' ? $message : '（未入力）') . "\n\n";
 $body .= "─────────────────────────────\n";
 $body .= "このメールはWebサイトのお問い合わせフォームから自動送信されました。";
 
 $headers  = "From: " . mb_encode_mimeheader(MAIL_FROM_NAME, 'UTF-8', 'B') . " <" . MAIL_FROM . ">\r\n";
-$headers .= "Reply-To: {$email}\r\n";
+if (!empty($email)) $headers .= "Reply-To: {$email}\r\n";
 $headers .= "MIME-Version: 1.0\r\n";
 $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
 $headers .= "Content-Transfer-Encoding: base64\r\n";
@@ -96,7 +108,8 @@ $sent = mail(MAIL_TO, $encodedSubject, $encodedBody, $headers, '-f' . MAIL_FROM)
 writeLog("mail()結果: " . ($sent ? "成功" : "失敗"));
 
 if ($sent) {
-    // ── 自動返信メール ─────────────────────────────
+    // ── 自動返信メール（有効なメールアドレスがある場合のみ）──────────
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $replySubject = '【FIND HOME】お問い合わせありがとうございます';
     $replyBody  = "{$name} 様\n\n";
     $replyBody .= "このたびは、FIND HOME（株式会社FIND）へお問い合わせいただき、誠にありがとうございます。\n";
@@ -108,15 +121,15 @@ if ($sent) {
     $replyBody .= "■ お問い合わせ内容\n\n";
     $replyBody .= "ご相談種別　　　：{$inquiryType}\n";
     $replyBody .= "お名前　　　　　：{$name}\n";
-    $replyBody .= "電話番号　　　　：{$phone}\n";
-    $replyBody .= "メールアドレス　：{$email}\n";
+    $replyBody .= "電話番号　　　　：" . ($phone !== '' ? $phone : '（未入力）') . "\n";
+    $replyBody .= "メールアドレス　：" . ($email !== '' ? $email : '（未入力）') . "\n";
     $replyBody .= "気になる物件URL：" . ($propertyUrl !== '' ? $propertyUrl : '（未入力）') . "\n";
     $replyBody .= "希望エリア　　　：" . ($area !== '' ? $area : '（未入力）') . "\n";
     $replyBody .= "家賃予算　　　　：" . ($budget !== '' ? $budget : '（未入力）') . "\n";
     $replyBody .= "引っ越し希望時期：" . ($moveTiming !== '' ? $moveTiming : '（未入力）') . "\n";
     $replyBody .= "希望連絡方法　　：" . ($contactMethod !== '' ? $contactMethod : '（未入力）') . "\n";
     $replyBody .= "連絡希望時間帯　：" . ($contactTime !== '' ? $contactTime : '（未入力）') . "\n\n";
-    $replyBody .= "ご相談内容：\n{$message}\n";
+    $replyBody .= "ご相談内容：\n" . ($message !== '' ? $message : '（未入力）') . "\n";
     $replyBody .= "──────────────────────────────────────────────────\n\n";
     $replyBody .= "株式会社FIND（FIND HOME）\n";
     $replyBody .= "https://www.findhome-japan.com";
@@ -131,6 +144,9 @@ if ($sent) {
 
     $replySent = mail($email, $encodedReplySubject, $encodedReplyBody, $replyHeaders, '-f' . MAIL_FROM);
     writeLog("自動返信結果: " . ($replySent ? "成功" : "失敗"));
+    } else {
+        writeLog("自動返信スキップ: 有効なメールアドレスなし");
+    }
 
     http_response_code(200);
     echo json_encode(['status' => 'success']);
