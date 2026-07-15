@@ -5,7 +5,7 @@ export default function Header() {
     <header className="site-header">
       <div className="header-inner">
         <Link className="brand" to="/" aria-label="FIND HOME トップへ">
-          <img className="brand-mark" src="/images/logo-blue.png" alt="FIND HOME" />
+          <img className="brand-mark" src="/images/logo-blue.png" alt="FIND HOME 仙台の不動産" width={176} height={44} decoding="async" />
         </Link>
         <nav className="nav" aria-label="主要ナビゲーション">
           <Link to="/#problems">お悩み</Link>

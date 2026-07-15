@@ -1,0 +1,72 @@
+# ============================================================
+# FIND HOME (React SPA) — Apache / Xserver 用 .htaccess
+# ビルド後 dist/ 直下にコピーされる（Vite が public/ を dist/ へ配置）。
+# 対応：常時HTTPS化・www統一・SPAフォールバック・
+#       セキュリティヘッダー・gzip・キャッシュ
+# 本番ドメイン: https://www.findhome-japan.com/
+# ============================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1) HTTP → HTTPS（常時HTTPS化）
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://www.findhome-japan.com%{REQUEST_URI} [R=301,L]
+
+  # 2) www なし → www あり（URL正規化）
+  RewriteCond %{HTTP_HOST} !^www\. [NC]
+  RewriteRule ^ https://www.findhome-japan.com%{REQUEST_URI} [R=301,L]
+
+  # 3) SPA フォールバック：実ファイル/ディレクトリ以外は index.html へ
+  #    （/privacy 等のクライアントルートを直接開いても表示できる）
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ /index.html [L]
+</IfModule>
+
+# セキュリティ関連レスポンスヘッダー
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header unset X-Powered-By
+</IfModule>
+
+# MIMEタイプ
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# gzip 圧縮（表示速度）
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE application/xml image/svg+xml
+</IfModule>
+
+# ブラウザキャッシュ（表示速度）
+<IfModule mod_expires.c>
+  ExpiresActive On
+  # ハッシュ付きのビルド成果物（/assets/）は長期キャッシュ
+  ExpiresByType text/css               "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/webp             "access plus 1 year"
+  ExpiresByType image/jpeg             "access plus 1 year"
+  ExpiresByType image/png              "access plus 1 year"
+  ExpiresByType image/svg+xml          "access plus 1 year"
+  ExpiresByType image/x-icon           "access plus 1 year"
+  # HTML は都度確認（SPAの更新反映のため）
+  ExpiresByType text/html              "access plus 0 seconds"
+</IfModule>
+
+# 機密ファイルへのアクセス禁止・ディレクトリ一覧無効化
+<FilesMatch "(^\.|\.(htaccess|htpasswd|ini|log|sh|bak|map)$)">
+  Require all denied
+</FilesMatch>
+Options -Indexes

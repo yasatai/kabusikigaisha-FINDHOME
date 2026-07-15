@@ -3,6 +3,23 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import MobileBottomNav from "../components/MobileBottomNav";
 import { initSiteInteractions } from "../lib/siteMotion";
+import { usePageSeo } from "../lib/seo";
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    { "@type": "Question", name: "仕事帰りの遅い時間でも内覧できますか？", acceptedAnswer: { "@type": "Answer", text: "物件や空室状況・管理会社確認・担当者予定によりますが、夜間・早朝の内覧もご相談いただけます。17時までにご連絡いただくと調整しやすくなります。" } },
+    { "@type": "Question", name: "SUUMOなどで見つけた他社物件も相談できますか？", acceptedAnswer: { "@type": "Answer", text: "はい。気になる物件のURLを送っていただければ、空室状況・初期費用・内覧可否をまとめて確認します。" } },
+    { "@type": "Question", name: "初期費用の見積りを事前に確認できますか？", acceptedAnswer: { "@type": "Answer", text: "はい。他社見積りの内容も確認し、不要な費用や分かりにくい項目がないか一緒に確認します。" } },
+    { "@type": "Question", name: "初期費用は必ず安くなりますか？", acceptedAnswer: { "@type": "Answer", text: "必ず安くなるとは限りません。ただし、見積り内容を確認することで、費用の内訳を理解し、納得して契約しやすくなります。" } },
+    { "@type": "Question", name: "現地集合はできますか？", acceptedAnswer: { "@type": "Answer", text: "物件や担当者の予定によりますが、現地集合もご相談可能です。事前に希望をお知らせください。" } },
+    { "@type": "Question", name: "急ぎの引っ越しでも対応できますか？", acceptedAnswer: { "@type": "Answer", text: "空室状況や審査状況によりますが、急ぎの方もできる限りスムーズに進められるよう確認します。" } },
+    { "@type": "Question", name: "17時までに電話すれば内覧できますか？", acceptedAnswer: { "@type": "Answer", text: "17時までにご連絡いただくと確認を進めやすくなります。物件や空室状況によりご案内条件が異なるため、まずは電話でご相談ください。" } },
+    { "@type": "Question", name: "保証人がいなくても相談できますか？", acceptedAnswer: { "@type": "Answer", text: "保証会社を利用できる物件もあります。条件に合う物件を確認しますのでご相談ください。" } },
+    { "@type": "Question", name: "売買や管理の相談もできますか？", acceptedAnswer: { "@type": "Answer", text: "はい。賃貸相談を主軸にしつつ、売買や管理についても内容に応じてご相談いただけます。" } },
+  ],
+};
 
 const star = (
   <svg viewBox="0 0 24 24">
@@ -13,6 +30,15 @@ const star = (
 const loopText = "FIND HOME — SENDAI, MIYAGI — ";
 
 export default function Home() {
+  usePageSeo({
+    title: "仙台の賃貸・不動産なら FIND HOME｜夜間内覧・初期費用相談・仲介手数料無料",
+    description:
+      "宮城・仙台で賃貸や不動産をお探しならFIND HOMEへ。仲介手数料無料、夜間内覧、SUUMO等の他社掲載物件の空室確認、初期費用の見積り確認までまとめて相談できます。売買・賃貸・管理まで地域密着でサポート。",
+    path: "/",
+    index: true,
+    jsonLd: [faqJsonLd],
+  });
+
   // script.js の挙動（FVアニメ・スクロールワイプ・トグル・計測）を移植して実行
   useEffect(() => {
     const cleanup = initSiteInteractions();
@@ -560,7 +586,10 @@ export default function Home() {
               </div>
               <div className="faq-featured" data-stagger="alt">
                 <article className="faq-feature">
-                  <img src="/images/voice-1.jpg" alt="仕事帰りの内覧相談" />
+                  <picture>
+                    <source type="image/webp" srcSet="/images/voice-1.webp" />
+                    <img src="/images/voice-1.jpg" alt="仕事帰りの夜間内覧の相談イメージ" loading="lazy" decoding="async" width={800} height={500} />
+                  </picture>
                   <div className="faq-feature-body">
                     <h3>
                       <span className="faq-mark">Q</span>
@@ -582,7 +611,10 @@ export default function Home() {
                   </div>
                 </article>
                 <article className="faq-feature">
-                  <img src="/images/voice-3.jpg" alt="物件URLの相談" />
+                  <picture>
+                    <source type="image/webp" srcSet="/images/voice-3.webp" />
+                    <img src="/images/voice-3.jpg" alt="他社掲載物件のURLを送って相談するイメージ" loading="lazy" decoding="async" width={800} height={500} />
+                  </picture>
                   <div className="faq-feature-body">
                     <h3>
                       <span className="faq-mark">Q</span>
@@ -605,7 +637,10 @@ export default function Home() {
                   </div>
                 </article>
                 <article className="faq-feature">
-                  <img src="/images/voice-2.jpg" alt="初期費用の見積り確認" />
+                  <picture>
+                    <source type="image/webp" srcSet="/images/voice-2.webp" />
+                    <img src="/images/voice-2.jpg" alt="初期費用の見積り内容を確認するイメージ" loading="lazy" decoding="async" width={800} height={500} />
+                  </picture>
                   <div className="faq-feature-body">
                     <h3>
                       <span className="faq-mark">Q</span>

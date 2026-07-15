@@ -22,7 +22,7 @@ export default function Footer({ withNav = false }: Props) {
       )}
       <div className="footer-inner">
         <div className="footer-brand-block">
-          <img src="/images/logo-blue.png" alt="FIND HOME" />
+          <img src="/images/logo-blue.png" alt="FIND HOME" width={200} height={48} loading="lazy" decoding="async" />
           <p>
             仙台・宮城の住まい探しを
             <br />

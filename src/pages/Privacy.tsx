@@ -3,8 +3,28 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { initSiteInteractions } from "../lib/siteMotion";
+import { usePageSeo } from "../lib/seo";
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "ホーム", item: "https://www.findhome-japan.com/" },
+    { "@type": "ListItem", position: 2, name: "プライバシーポリシー", item: "https://www.findhome-japan.com/privacy" },
+  ],
+};
 
 export default function Privacy() {
+  usePageSeo({
+    title: "プライバシーポリシー | FIND HOME",
+    description:
+      "株式会社FINDが運営するFIND HOMEのプライバシーポリシー。個人情報の取得・利用・第三者提供・安全管理措置・開示等の請求についてご案内します。",
+    path: "/privacy",
+    index: false,
+    ogType: "article",
+    jsonLd: [breadcrumbJsonLd],
+  });
+
   useEffect(() => {
     const cleanup = initSiteInteractions();
     return cleanup;
