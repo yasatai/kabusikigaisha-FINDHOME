@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/components/footer.tsx","./src/components/header.tsx","./src/components/mobilebottomnav.tsx","./src/lib/analytics.ts","./src/lib/scrolltop.ts","./src/lib/sitemotion.ts","./src/pages/home.tsx","./src/pages/privacy.tsx"],"errors":true,"version":"5.9.3"}
