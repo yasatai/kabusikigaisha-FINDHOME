@@ -79,7 +79,7 @@ export default function Footer({ withNav = false }: Props) {
           </div>
         </dl>
       </div>
-      <small className="footer-copy">© 2026 FIND HOME. All Rights Reserved.</small>
+      <small className="footer-copy">© 2026 FIND HOME All Rights Reserved.</small>
     </footer>
   );
 }
